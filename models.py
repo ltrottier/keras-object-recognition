@@ -104,7 +104,7 @@ def load_resnet(input_shape, n_classes, depth, weight_decay):
     def stage(x, n_input, n_output, n_block, stride):
         x = basic_block(x, n_input, n_output, stride)
         for i in range(n_block - 1):
-            x = basic_block(x, n_input, n_output, 1)
+            x = basic_block(x, n_output, n_output, 1)
         return x
 
     stages = [16, 16, 32, 64]
