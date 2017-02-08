@@ -54,7 +54,7 @@ def load_simple_cnn(input_shape, n_classes, weight_decay):
 
     return model
 
-def load_resnet(input_shape, n_classes, depth, weight_decay):
+def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
 
     wd = weight_decay
 
@@ -107,7 +107,7 @@ def load_resnet(input_shape, n_classes, depth, weight_decay):
             x = basic_block(x, n_output, n_output, 1)
         return x
 
-    stages = [16, 16, 32, 64]
+    stages = [16, 16*widen, 32*widen, 64*widen]
     if (depth - 4) % 6 != 0:
         error(Exception("depth must be 6n+4."))
     n_block = int((depth - 4) / 6)
@@ -134,11 +134,11 @@ def load_resnet(input_shape, n_classes, depth, weight_decay):
 
     return model
 
-def load_model(net_type, input_shape, n_classes, depth, weight_decay):
+def load_model(net_type, input_shape, n_classes, depth, weight_decay, widen):
     if net_type == 'simple':
         model = load_simple_cnn(input_shape, n_classes, weight_decay)
     elif net_type == 'resnet':
-        model = load_resnet(input_shape, n_classes, depth, weight_decay)
+        model = load_resnet(input_shape, n_classes, depth, weight_decay, widen)
     else:
         raise("Invalid net_type.")
     return model
