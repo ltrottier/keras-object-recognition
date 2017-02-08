@@ -1,7 +1,7 @@
 import numpy as np
 from models import load_model
 from keras import backend as K
-from keras.callbacks import LearningRateScheduler
+from keras.callbacks import LearningRateScheduler, TensorBoard
 from keras.datasets import cifar10, cifar100, mnist
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
@@ -10,6 +10,7 @@ from optparse import OptionParser
 
 # Read options
 parser = OptionParser()
+parser.add_option('--savepath', default='results')
 parser.add_option('--dataset', default="cifar10", help="cifar10, cifar100")
 parser.add_option('--net_type', default='resnet')
 parser.add_option('--depth', type=int, default=16)
@@ -75,6 +76,8 @@ def lrs_callback(epoch):
     return opts.lr * opts.lr_decay**(np.array(opts.lr_schedule) <= epoch).sum()
 
 learning_rate_scheduler = LearningRateScheduler(lrs_callback)
+tensorboard = TensorBoard(opts.savepath)
+callbacks = [learning_rate_scheduler, tensorboard]
 
 model.fit_generator(generator=trgenerator,
                     samples_per_epoch=trsize,
@@ -82,6 +85,6 @@ model.fit_generator(generator=trgenerator,
                     initial_epoch=opts.epoch_init,
                     nb_worker=opts.nthreads,
                     pickle_safe=True,
-                    callbacks=[learning_rate_scheduler],
+                    callbacks=callbacks,
                     validation_data=tstgenerator,
                     nb_val_samples=tstsize)
