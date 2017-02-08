@@ -28,6 +28,7 @@ parser.add_option('--lr_schedule', default=[60,120,160])
 parser.add_option('--momentum', type=float, default=0.9)
 parser.add_option('--nesterov', action='store_true', default=True)
 (opts, args) = parser.parse_args()
+print(opts)
 
 # Load data
 (xtr, ytr), (xtst, ytst) = eval(opts.dataset).load_data()
@@ -60,7 +61,8 @@ model = load_model(net_type=opts.net_type,
                    input_shape=(imh, imw, imc),
                    n_classes=n_classes,
                    depth=opts.depth,
-                   weight_decay=opts.weight_decay)
+                   weight_decay=opts.weight_decay,
+                   widen=opts.widen)
 
 optimizer = SGD(lr=opts.lr, momentum=opts.momentum, nesterov=opts.nesterov)
 
