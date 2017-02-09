@@ -1,7 +1,9 @@
+import os
 import numpy as np
 from models import load_model
 from keras import backend as K
-from keras.callbacks import LearningRateScheduler, TensorBoard
+from keras.callbacks import (
+    LearningRateScheduler, TensorBoard, ModelCheckpoint, CSVLogger)
 from keras.datasets import cifar10, cifar100, mnist
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
@@ -42,49 +44,61 @@ tstsize = xtst.shape[0]
 n_classes = ytr.shape[1]
 
 # Data generator
-trdatagen = ImageDataGenerator(featurewise_center=True,
-                               featurewise_std_normalization=True,
-                               width_shift_range=opts.randomcrop/imw,
-                               height_shift_range=opts.randomcrop/imh,
-                               fill_mode=opts.randomcrop_type,
-                               cval=0,
-                               horizontal_flip=opts.hflip)
+trdatagen = ImageDataGenerator(
+    featurewise_center=True,
+    featurewise_std_normalization=True,
+    width_shift_range=opts.randomcrop/imw,
+    height_shift_range=opts.randomcrop/imh,
+    fill_mode=opts.randomcrop_type,
+    cval=0,
+    horizontal_flip=opts.hflip)
 trdatagen.fit(xtr)
 trgenerator = trdatagen.flow(xtr, ytr, batch_size=opts.bs)
 
-tstdatagen = ImageDataGenerator(featurewise_center=True,
-                                featurewise_std_normalization=True)
+tstdatagen = ImageDataGenerator(
+    featurewise_center=True,
+    featurewise_std_normalization=True)
 tstdatagen.fit(xtr)
 tstgenerator = tstdatagen.flow(xtst, ytst, batch_size=opts.bs)
 
 # Instanciate model
-model = load_model(net_type=opts.net_type,
-                   input_shape=(imh, imw, imc),
-                   n_classes=n_classes,
-                   depth=opts.depth,
-                   weight_decay=opts.weight_decay,
-                   widen=opts.widen)
+model = load_model(
+    net_type=opts.net_type,
+    input_shape=(imh, imw, imc),
+    n_classes=n_classes,
+    depth=opts.depth,
+    weight_decay=opts.weight_decay,
+    widen=opts.widen)
 
 optimizer = SGD(lr=opts.lr, momentum=opts.momentum, nesterov=opts.nesterov)
 
-model.compile(loss="categorical_crossentropy",
-              optimizer=optimizer,
-              metrics=['accuracy'])
+model.compile(
+    loss="categorical_crossentropy",
+    optimizer=optimizer,
+    metrics=['accuracy'])
 
-# Train model
+# Define callbacks
 def lrs_callback(epoch):
     return opts.lr * opts.lr_decay**(np.array(opts.lr_schedule) <= epoch).sum()
 
 learning_rate_scheduler = LearningRateScheduler(lrs_callback)
 tensorboard = TensorBoard(opts.savepath)
-callbacks = [learning_rate_scheduler, tensorboard]
+checkpoint = ModelCheckpoint(
+    os.path.join(opts.savepath, "model.hdf5"),
+    monitor="val_acc",
+    save_best_only=True,
+    mode="max")
+logger = CSVLogger(os.path.join(opts.savepath, "results.log"), append=True)
+callbacks = [learning_rate_scheduler, tensorboard, checkpoint, logger]
 
-model.fit_generator(generator=trgenerator,
-                    samples_per_epoch=trsize,
-                    nb_epoch=opts.epoch_max,
-                    initial_epoch=opts.epoch_init,
-                    nb_worker=opts.nthreads,
-                    pickle_safe=True,
-                    callbacks=callbacks,
-                    validation_data=tstgenerator,
-                    nb_val_samples=tstsize)
+# Train model
+model.fit_generator(
+    generator=trgenerator,
+    samples_per_epoch=trsize - trsize % opts.bs,
+    nb_epoch=opts.epoch_max,
+    initial_epoch=opts.epoch_init,
+    nb_worker=opts.nthreads,
+    pickle_safe=True,
+    callbacks=callbacks,
+    validation_data=tstgenerator,
+    nb_val_samples=tstsize)

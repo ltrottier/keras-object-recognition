@@ -27,20 +27,23 @@ def channel_axis():
 def load_simple_cnn(input_shape, n_classes, weight_decay):
     model = Sequential()
 
-    model.add(Convolution2D(32, 3, 3, border_mode='same',
-                            input_shape=input_shape,
-                            W_regularizer=l2(weight_decay)))
+    model.add(Convolution2D(
+        32, 3, 3, border_mode='same',
+        input_shape=input_shape,
+        W_regularizer=l2(weight_decay)))
     model.add(Activation('relu'))
     model.add(Convolution2D(32, 3, 3))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
 
-    model.add(Convolution2D(64, 3, 3, border_mode='same',
-                            W_regularizer=l2(weight_decay)))
+    model.add(Convolution2D(
+        64, 3, 3, border_mode='same',
+        W_regularizer=l2(weight_decay)))
     model.add(Activation('relu'))
-    model.add(Convolution2D(64, 3, 3,
-                            W_regularizer=l2(weight_decay)))
+    model.add(Convolution2D(
+        64, 3, 3,
+        W_regularizer=l2(weight_decay)))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
@@ -59,10 +62,11 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
     wd = weight_decay
 
     def bnrelu(x_input):
-        x_output = BatchNormalization(mode=0,
-                                      axis=channel_axis(),
-                                      gamma_regularizer=l2(wd),
-                                      beta_regularizer=l2(wd))(x_input)
+        x_output = BatchNormalization(
+            mode=0,
+            axis=channel_axis(),
+            gamma_regularizer=l2(wd),
+            beta_regularizer=l2(wd))(x_input)
         x_output = Activation('relu')(x_output)
         return x_output
 
@@ -73,31 +77,34 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
         if n_input != n_output:
             x = resmap
 
-        resmap = Convolution2D(n_output, 3, 3,
-                               init='he_normal',
-                               border_mode='same',
-                               subsample=(stride, stride),
-                               bias=False,
-                               W_regularizer=l2(wd))(resmap)
+        resmap = Convolution2D(
+            n_output, 3, 3,
+            init='he_normal',
+            border_mode='same',
+            subsample=(stride, stride),
+            bias=False,
+            W_regularizer=l2(wd))(resmap)
 
         resmap = bnrelu(resmap)
 
-        resmap = Convolution2D(n_output, 3, 3,
-                               init='he_normal',
-                               border_mode='same',
-                               subsample=(1,1),
-                               bias=False,
-                               W_regularizer=l2(wd))(resmap)
+        resmap = Convolution2D(
+            n_output, 3, 3,
+            init='he_normal',
+            border_mode='same',
+            subsample=(1,1),
+            bias=False,
+            W_regularizer=l2(wd))(resmap)
 
         if n_input == n_output:
             skip = x # Identity skip connection
         else:
-            skip = Convolution2D(n_output, 1, 1,
-                                 init='he_normal',
-                                 border_mode='same',
-                                 subsample=(stride, stride),
-                                 bias=False,
-                                 W_regularizer=l2(wd))(x)
+            skip = Convolution2D(
+                n_output, 1, 1,
+                init='he_normal',
+                border_mode='same',
+                subsample=(stride, stride),
+                bias=False,
+                W_regularizer=l2(wd))(x)
 
         return merge([resmap, skip], mode='sum')
 
@@ -114,21 +121,23 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
 
     # Create model
     x_input = Input(shape=input_shape)
-    x = Convolution2D(stages[0], 3, 3,
-                      init='he_normal',
-                      border_mode='same',
-                      subsample=(1,1),
-                      bias=False,
-                      W_regularizer=l2(wd))(x_input) # spatial size 32x32
+    x = Convolution2D(
+        stages[0], 3, 3,
+        init='he_normal',
+        border_mode='same',
+        subsample=(1,1),
+        bias=False,
+        W_regularizer=l2(wd))(x_input) # spatial size 32x32
     x = stage(x, stages[0], stages[1], n_block, 1) # spatial size 32x32
     x = stage(x, stages[1], stages[2], n_block, 2) # spatial size 16x16
     x = stage(x, stages[2], stages[3], n_block, 2) # spatial size 8x8
     x = bnrelu(x)
     x = GlobalAveragePooling2D()(x)
-    x = Dense(n_classes,
-              init='he_normal',
-              W_regularizer=l2(wd),
-              b_regularizer=l2(wd))(x)
+    x = Dense(
+        n_classes,
+        init='he_uniform',
+        W_regularizer=l2(wd),
+        b_regularizer=l2(wd))(x)
     x_output = Activation('softmax')(x)
     model = Model(input=x_input, output=x_output)
 
