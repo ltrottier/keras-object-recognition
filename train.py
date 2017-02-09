@@ -94,7 +94,7 @@ callbacks = [learning_rate_scheduler, tensorboard, checkpoint, logger]
 # Train model
 model.fit_generator(
     generator=trgenerator,
-    samples_per_epoch=trsize - trsize % opts.bs,
+    samples_per_epoch=trsize,
     nb_epoch=opts.epoch_max,
     initial_epoch=opts.epoch_init,
     nb_worker=opts.nthreads,
