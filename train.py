@@ -38,7 +38,7 @@ ytr = to_categorical(ytr)
 xtst = xtst.astype('float32')
 ytst = to_categorical(ytst)
 trsize, imh, imw, imc = xtr.shape
-tstsize = xtst.shape[1]
+tstsize = xtst.shape[0]
 n_classes = ytr.shape[1]
 
 # Data generator
