@@ -8,29 +8,29 @@ from keras.datasets import cifar10, cifar100, mnist
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils.np_utils import to_categorical
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 # Read options
-parser = OptionParser()
-parser.add_option('--savepath', default='results')
-parser.add_option('--dataset', default="cifar10", help="cifar10, cifar100")
-parser.add_option('--net_type', default='resnet')
-parser.add_option('--depth', type=int, default=16)
-parser.add_option('--widen', type=int, default=1)
-parser.add_option('--weight_decay', type=float, default=5e-4)
-parser.add_option('--randomcrop', type=int, default=4)
-parser.add_option('--randomcrop_type', default="reflect", help="zero, reflect")
-parser.add_option('--hflip', action='store_false', default=True)
-parser.add_option('--epoch_max', type=int, default=200)
-parser.add_option('--epoch_init', type=int, default=0)
-parser.add_option('--bs', type=int, default=128)
-parser.add_option('--nthreads', type=int, default=2)
-parser.add_option('--lr', type=float, default=0.1)
-parser.add_option('--lr_decay', type=float, default=0.2)
-parser.add_option('--lr_schedule', default=[60,120,160])
-parser.add_option('--momentum', type=float, default=0.9)
-parser.add_option('--nesterov', action='store_false', default=True)
-(opts, args) = parser.parse_args()
+parser = ArgumentParser()
+parser.add_argument('--savepath', default='results')
+parser.add_argument('--dataset', default="cifar10", help="cifar10, cifar100")
+parser.add_argument('--net_type', default='resnet')
+parser.add_argument('--depth', type=int, default=16)
+parser.add_argument('--widen', type=int, default=1)
+parser.add_argument('--weight_decay', type=float, default=5e-4)
+parser.add_argument('--randomcrop', type=int, default=4)
+parser.add_argument('--randomcrop_type', default="reflect", help="zero, reflect")
+parser.add_argument('--hflip', action='store_false', default=True)
+parser.add_argument('--epoch_max', type=int, default=200)
+parser.add_argument('--epoch_init', type=int, default=0)
+parser.add_argument('--bs', type=int, default=128)
+parser.add_argument('--nthreads', type=int, default=2)
+parser.add_argument('--lr', type=float, default=0.1)
+parser.add_argument('--lr_decay', type=float, default=0.2)
+parser.add_argument('--lr_schedule', nargs='+', default=[60,120,160], type=int)
+parser.add_argument('--momentum', type=float, default=0.9)
+parser.add_argument('--nesterov', action='store_false', default=True)
+opts = parser.parse_args()
 print(opts)
 
 # Load data
