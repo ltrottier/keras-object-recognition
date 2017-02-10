@@ -26,6 +26,7 @@ python train.py
 ```
 
 Default options (see `train.py` for the available options):
+
 1. `--savepath results`
 2. `--dataset cifar10`
 3. `--net_type resnet`
