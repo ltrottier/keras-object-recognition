@@ -28,28 +28,54 @@ def load_simple_cnn(input_shape, n_classes, weight_decay):
     model = Sequential()
 
     model.add(Convolution2D(
-        32, 3, 3, border_mode='same',
+        64, 3, 3, border_mode='same',
         input_shape=input_shape,
+        init='he_normal',
         W_regularizer=l2(weight_decay)))
-    model.add(Activation('relu'))
-    model.add(Convolution2D(32, 3, 3))
+    model.add(BatchNormalization(
+        mode=0,
+        axis=channel_axis(),
+        gamma_regularizer=l2(weight_decay),
+        beta_regularizer=l2(weight_decay)
+    ))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
 
     model.add(Convolution2D(
         64, 3, 3, border_mode='same',
+        init='he_normal',
         W_regularizer=l2(weight_decay)))
-    model.add(Activation('relu'))
-    model.add(Convolution2D(
-        64, 3, 3,
-        W_regularizer=l2(weight_decay)))
+    model.add(BatchNormalization(
+        mode=0,
+        axis=channel_axis(),
+        gamma_regularizer=l2(weight_decay),
+        beta_regularizer=l2(weight_decay)
+    ))
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
+
+    model.add(Convolution2D(
+        64, 3, 3, border_mode='same',
+        init='he_normal',
+        W_regularizer=l2(weight_decay)))
+    model.add(BatchNormalization(
+        mode=0,
+        axis=channel_axis(),
+        gamma_regularizer=l2(weight_decay),
+        beta_regularizer=l2(weight_decay)
+    ))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
 
     model.add(Flatten())
-    model.add(Dense(512, W_regularizer=l2(weight_decay)))
+    model.add(Dense(512, W_regularizer=l2(weight_decay), bias=False))
+    model.add(BatchNormalization(
+        mode=0,
+        axis=-1,
+        gamma_regularizer=l2(weight_decay),
+        beta_regularizer=l2(weight_decay)
+    ))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(n_classes, W_regularizer=l2(weight_decay)))
@@ -135,9 +161,8 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
     x = GlobalAveragePooling2D()(x)
     x = Dense(
         n_classes,
-        init='he_uniform',
-        W_regularizer=l2(wd),
-        b_regularizer=l2(wd))(x)
+        init='glorot_uniform',
+        W_regularizer=l2(wd))(x)
     x_output = Activation('softmax')(x)
     model = Model(input=x_input, output=x_output)
 
