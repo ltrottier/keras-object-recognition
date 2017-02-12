@@ -3,7 +3,13 @@ Minimalist Keras implementation for deep learning object recognition.
 
 ## Installation
 
-First, install the requirements:
+(optional) Create a new anaconda environment:
+```bash
+conda create --name keras-object-recognition python=3
+source activate keras-object-recognition
+```
+
+Install the requirements:
 ```bash
 pip install -r requirements.txt
 ```
@@ -45,3 +51,11 @@ Default options (see `train.py` for the available options):
 16. `--lr_schedule 60 120 160`
 17. `--momentum 0.9`
 18. `--nesterov` (pass to remove nesterov)
+
+## Tensorboard Visualization
+
+In a new terminal, call `tensorboard` and use the value of `--savepath` as logdir:
+```bash
+tensorboard --logdir=results
+```
+Open your internet browser at `localhost` with the provided port number (like 6006), as follows: `http://localhost:6006/`.
