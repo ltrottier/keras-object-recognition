@@ -15,6 +15,7 @@ from keras.layers import (
     Input,
     MaxPooling2D,
     merge,
+    SeparableConvolution2D,
 )
 from keras.regularizers import l2
 
@@ -168,11 +169,103 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
 
     return model
 
+def load_aanet(input_shape, n_classes, weight_decay):
+
+    wd = weight_decay
+
+    def bnrelu(x_input):
+        x_output = BatchNormalization(
+            mode=0,
+            axis=channel_axis(),
+            gamma_regularizer=l2(wd),
+            beta_regularizer=l2(wd))(x_input)
+        x_output = Activation('relu')(x_output)
+        return x_output
+
+    def block(x, nf):
+        x = bnrelu(x)
+        x = Convolution2D(
+            nf/4, 1, 1, border_mode='same',
+            init='he_normal',
+            bias=False,
+            W_regularizer=l2(wd))(x)
+        x = bnrelu(x)
+
+        x_h = SeparableConvolution2D(
+            nf/4, 1, 2, border_mode='same',
+            init='he_normal',
+            depthwise_regularizer=l2(wd),
+            bias=False)(x)
+
+        x_v = SeparableConvolution2D(
+            nf/4, 2, 1, border_mode='same',
+            init='he_normal',
+            depthwise_regularizer=l2(wd),
+            bias=False)(x)
+
+        x_d = SeparableConvolution2D(
+            nf/4, 1, 2, border_mode='same',
+            init='he_normal',
+            depthwise_regularizer=l2(wd),
+            bias=False)(x)
+
+        x_d = SeparableConvolution2D(
+            nf/4, 2, 1, border_mode='same',
+            init='he_normal',
+            depthwise_regularizer=l2(wd),
+            bias=False)(x_d)
+
+        x = merge([x, x_h, x_v, x_d], mode='concat', concat_axis=channel_axis())
+        x = bnrelu(x)
+        x = Convolution2D(
+            nf, 2, 2, border_mode='same',
+            init='he_normal',
+            bias=False,
+            W_regularizer=l2(wd))(x)
+
+        return x
+
+    x_input = Input(shape=input_shape)
+
+    x = Convolution2D(
+        64, 3, 3, border_mode='same',
+        init='he_normal',
+        bias=False,
+        W_regularizer=l2(weight_decay))(x_input)
+
+    x = block(x, 64)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = block(x, 64)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = block(x, 64)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    x = Flatten()(x)
+
+
+    x = Dense(512, W_regularizer=l2(wd), bias=False)(x)
+    x = BatchNormalization(
+        mode=0,
+        axis=-1,
+        gamma_regularizer=l2(wd),
+        beta_regularizer=l2(wd))(x)
+    x = Activation('relu')(x)
+    x = Dropout(0.5)(x)
+    x = Dense(n_classes, W_regularizer=l2(wd))(x)
+    x = Activation('softmax')(x)
+    x_output = x
+
+    return Model(input=x_input, output=x_output)
+
+
+
 def load_model(net_type, input_shape, n_classes, depth, weight_decay, widen):
     if net_type == 'simple':
         model = load_simple_cnn(input_shape, n_classes, weight_decay)
     elif net_type == 'resnet':
         model = load_resnet(input_shape, n_classes, depth, weight_decay, widen)
+    elif net_type == 'aanet':
+        model = load_aanet(input_shape, n_classes, weight_decay)
     else:
         raise("Invalid net_type.")
     return model
