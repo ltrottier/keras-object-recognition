@@ -17,6 +17,7 @@ from keras.layers import (
     merge,
 )
 from keras.regularizers import l2
+from keras.applications import resnet50
 
 def channel_axis():
     if K.image_dim_ordering() == 'tf':
@@ -168,11 +169,26 @@ def load_resnet(input_shape, n_classes, depth, weight_decay, widen):
 
     return model
 
+
+def load_resnet50_imagenet(n_classes, weight_decay):
+    base_model = resnet50.ResNet50(weights='imagenet', include_top=False)
+    for layer in base_model.layers:
+        layer.trainable = False
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(n_classes, W_regularizer=l2(weight_decay))(x)
+    x = Activation('softmax')(x)
+
+    return Model(input=base_model.input, output=x)
+
+
 def load_model(net_type, input_shape, n_classes, depth, weight_decay, widen):
     if net_type == 'simple':
         model = load_simple_cnn(input_shape, n_classes, weight_decay)
     elif net_type == 'resnet':
         model = load_resnet(input_shape, n_classes, depth, weight_decay, widen)
+    elif net_type == 'resnet50imagenet':
+        model = load_resnet50_imagenet(n_classes, weight_decay)
     else:
         raise("Invalid net_type.")
     return model
