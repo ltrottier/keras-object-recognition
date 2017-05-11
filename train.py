@@ -10,6 +10,11 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils.np_utils import to_categorical
 from argparse import ArgumentParser
 
+config = K.tf.ConfigProto()
+config.gpu_options.allow_growth=True
+sess = K.tf.Session(config=config)
+K.set_session(sess)
+
 # Read options
 parser = ArgumentParser()
 parser.add_argument('--savepath', default='results')
@@ -70,6 +75,8 @@ model = load_model(
     weight_decay=opts.weight_decay,
     widen=opts.widen)
 
+print(model.summary())
+
 optimizer = SGD(lr=opts.lr, momentum=opts.momentum, nesterov=opts.nesterov)
 
 model.compile(
@@ -102,3 +109,6 @@ model.fit_generator(
     callbacks=callbacks,
     validation_data=tstgenerator,
     nb_val_samples=tstsize)
+
+# Save last updated model
+model.save(os.path.join(opts.savepath, "model_last.hdf5"))
