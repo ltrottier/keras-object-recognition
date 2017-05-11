@@ -122,6 +122,10 @@ class Unfreeze(Callback):
             if self.idx < -len(self.model.layers):
                 self.idx = -len(self.model.layers)
             self.model.layers[self.idx].trainable = True
+            self.model.compile(
+                loss="categorical_crossentropy",
+                optimizer=self.model.optimizer,
+                metrics=['accuracy'])
 
 def lrs_callback(epoch):
     return opts.lr * opts.lr_decay**(np.array(opts.lr_schedule) <= epoch).sum()
